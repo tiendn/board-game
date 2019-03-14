@@ -12,3 +12,63 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+.container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center
+}
+
+.card {
+    width: 10vw;
+    height: 18vh;
+    /* justify-content: center */
+}
+
+.card-image {
+    width: 10vw;
+    height: 18vh;
+    background-size: contain
+}
+
+.elevation {
+    box-shadow: 
+    0px 1px 3px 0px rgba(0,0,0,0.2), 
+    0px 1px 1px 0px rgba(0,0,0,0.14), 
+    0px 2px 1px -1px rgba(0,0,0,0.12);
+}
+
+.player-container {
+    width: 30vw;
+    height: 200px;
+}
+
+.text-center {
+    text-align: center
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+    justify-content: center
+}
+
+#score-table {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    z-index: 999;
+}

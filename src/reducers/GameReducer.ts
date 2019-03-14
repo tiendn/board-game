@@ -1,10 +1,9 @@
-import { START_GAME, PLAYING_GAME, REVEAL_GAME, NEXT_MATCH, SHOW_ERR, HIDE_ERR } from './../constants/ReduxTypes';
+import { START_GAME, PLAYING_GAME, REVEAL_GAME, NEXT_MATCH, SHOW_ERR, HIDE_ERR, DRAW_CARDS, SHUFFLE_GAME } from './../constants/ReduxTypes';
 const INIT_STATE = {
-    numberOfPlayers: 4,         // The number of players
     isReveal: false,            // The card is face up or down.
     isPlaying: false,           // The game is playing or not.
     isControlLoading: false,    // Control bar is loading or not
-    players: [],                // Array points of player,
+    playerCards: {},            // Array points of player,
     deckId: null,               // The current deck identifier
     matchNumber: 0,             // The current match number
     err: ''
@@ -17,7 +16,7 @@ export default (state = INIT_STATE, action: any) => {
             return {
                 ...state,
                 isControlLoading: true,
-
+                isPlaying: true
             }
 
         // Start playing game
@@ -25,15 +24,31 @@ export default (state = INIT_STATE, action: any) => {
             return {
                 ...state,
                 deckId: action.payload,
-                isControlLoading: false,
                 matchNumber: 1
+            }
+
+        case SHUFFLE_GAME:
+            return {
+                ...state,
+                isControlLoading: true,
+                playerCards: [],
+                matchNumber: 0
+            }
+
+        case DRAW_CARDS:
+            console.log(action)
+            return {
+                ...state,
+                isControlLoading: false,
+                playerCards: { ...state.playerCards, [state.matchNumber]: action.payload }
             }
 
         // Reveal game
         case REVEAL_GAME:
             return {
                 ...state,
-                isReveal: true
+                isReveal: true,
+                playerCards: action.payload
             }
 
         // Next game match 
@@ -47,10 +62,17 @@ export default (state = INIT_STATE, action: any) => {
                     matchNumber: matchNumber + 1
                 }
             }
-            return state;
+            return {
+                ...state,
+                isPlaying: false,
+                isReveal: true,
+                isControlLoading: false,
+                matchNumber: 6
+            }
 
         // Show err Snackbars with error message
         case SHOW_ERR:
+            console.log(action)
             return {
                 ...state,
                 err: action.payload

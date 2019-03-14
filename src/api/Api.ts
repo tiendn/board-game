@@ -1,13 +1,15 @@
 import axios from 'axios';
 
 export class Api {
-    static TIMEOUT_RESPONSE = 5000; // 5000ms
+    static TIMEOUT_RESPONSE = 10000; // ms
 
     static async get(url: string, params = {}) {
         const initParams = {
             timeout: this.TIMEOUT_RESPONSE,
         }
         const result = await axios.get(url, { ...initParams, ...params });
+        // Handle server error
+        // if (result.status < 200 || result.status >= 400) return;
         return result;
     }
 
@@ -21,6 +23,7 @@ export class Api {
 
     /**
      * Reshuffle the current session of game. 
+     * 
      * All remaining card will be returned to default value: 52 cards
      */
     static async reShuffleCard(deck_id: string) {

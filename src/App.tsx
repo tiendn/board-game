@@ -7,9 +7,7 @@ import Game from './components/Game';
 
 const middleWare = applyMiddleware(ReduxThunk);
 
-const store = createStore(reducers, compose(
-    middleWare
-));
+const store = createStore(reducers, {}, middleWare);
 
 class App extends Component {
     render() {
