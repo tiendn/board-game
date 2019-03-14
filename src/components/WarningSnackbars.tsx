@@ -28,7 +28,7 @@ class WarningSnackbars extends React.Component<WarningProps> {
             <Snackbar
                 anchorOrigin={{
                     vertical: 'bottom',
-                    horizontal: 'left',
+                    horizontal: 'center',
                 }}
                 open={err !== ''}
                 autoHideDuration={3000}
