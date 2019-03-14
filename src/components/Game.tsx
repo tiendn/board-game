@@ -5,6 +5,7 @@ import Player from './Player';
 import WarningSnackbars from './WarningSnackbars';
 import ScoreTable from './ScoreTable';
 import { Config } from '../constants/Config';
+import EndGame from './EndGame';
 
 export default class Game extends React.PureComponent {
     render() {
@@ -21,6 +22,7 @@ export default class Game extends React.PureComponent {
                 </div>
                 <WarningSnackbars />
                 <ScoreTable />
+                <EndGame />
             </div>
         )
     }

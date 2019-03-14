@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import { Close, Warning } from '@material-ui/icons';
 import { IconButton, SnackbarContent, Snackbar } from '@material-ui/core';
 import { hideError } from '../actions/GameAction';
+import { amber } from '@material-ui/core/colors';
+import { Colors } from '../constants/Colors';
 
 interface WarningProps {
     err: string,
@@ -35,8 +37,8 @@ class WarningSnackbars extends React.Component<WarningProps> {
                 <SnackbarContent
                     aria-describedby="client-snackbar"
                     message={
-                        <span id="client-snackbar" >
-                            <Warning />
+                        <span id="client-snackbar">
+                            <Warning style={{ paddingRight: 10 }} />
                             {err}
                         </span>
                     }
@@ -50,6 +52,7 @@ class WarningSnackbars extends React.Component<WarningProps> {
                             <Close />
                         </IconButton>,
                     ]}
+                    style={{ backgroundColor: Colors.redWarning }}
                 />
             </Snackbar>
         );

@@ -12,3 +12,13 @@ export const getPlayerFromIndex = (index: number) => {
             return null;
     }
 }
+
+export const getPointFromValue = (value: string) => {
+    if (value == "ACE") {
+        return 1;
+    }
+    if (value == "JACK" || value == "QUEEN" || value == "KING") {
+        return 10;
+    }
+    return parseInt(value, 10);
+}

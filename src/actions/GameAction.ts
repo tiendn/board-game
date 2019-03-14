@@ -1,87 +1,132 @@
-import { getPlayerFromIndex } from './../utils/Utils';
+import { CardEntity } from './../entities/Card';
+import { getPlayerFromIndex, getPointFromValue } from './../utils/Utils';
 import { Config } from './../constants/Config';
 import { Api } from './../api/Api';
-import { START_GAME, PLAYING_GAME, REVEAL_GAME, SHOW_ERR, HIDE_ERR, DRAW_CARDS, SHUFFLE_GAME } from './../constants/ReduxTypes';
+import { START_GAME, PLAYING_GAME, REVEAL_GAME, SHOW_ERR, HIDE_ERR, DRAW_CARDS, SHUFFLE_GAME_START, SHUFFLE_GAME_SUCCESS, END_GAME, NEXT_MATCH, BACK_MATCH, SHUFFLE_GAME_FAILED, PLAY_GAME_AGAIN } from './../constants/ReduxTypes';
 import { AxiosResponse } from 'axios';
-import { PlayerCard } from '../entities/PlayerCard';
-export const playGame = (deckId: string) => (dispatch: Function) => {
-    if (!deckId) {
-        initDeck(dispatch);                 // New game
-    } else {
-        shuffleDeck(dispatch, deckId);      // Play again game
-    }
+export const playGame = () => (dispatch: Function) => {
+    initDeck(dispatch);                 // New game
     dispatch({
         type: START_GAME
     })
 }
 
-export const shuffleDeck = async (dispatch: Function, deckId: string) => {
-    const result = await Api.reShuffleCard(deckId);
-    console.log(result);
-    const { data } = result;
-    if (data && data.success) {
-        drawCards(dispatch, Config.numberOfPlayers, data.deck_id);
-        dispatch({
-            type: SHUFFLE_GAME
-        })
-    }
-}
 
 const initDeck = async (dispatch: Function) => {
     const result = await Api.giveDeckCard();
-    console.log(result);
 
     const { data } = result;
     if (data && data.success) {
-        drawCards(dispatch, Config.numberOfPlayers, data.deck_id);
         dispatch({
             type: PLAYING_GAME,
             payload: data.deck_id
         })
+        dispatch(drawCards());
+
     } else {
         dispatch(showError("Init game failed"));
     }
 }
 
+// Shuffle deck
+export const shuffleDeck = (deckId: string) => async (dispatch: Function) => {
+    dispatch({
+        type: SHUFFLE_GAME_START
+    })
+    const result = await Api.shuffleDeck(deckId);
+    const { data } = result;
+
+    if (data && data.success) {
+        dispatch({
+            type: SHUFFLE_GAME_SUCCESS
+        })
+    } else {
+        dispatch(showError("Shuffle game failed"));
+        dispatch({
+            type: SHUFFLE_GAME_FAILED
+        });
+    }
+}
+
 // Reveal
-// export const revealGame = () => (getState: Function) => {
-//     const state = getState();
-//     const { playerCards, matchNumber, numberOfPlayers } = state.game;
-//     if (playerCards[matchNumber]) {
-//         // Loop each card to calculate total point
-//         const point = getPointFromValue(data.value);
-//         if (point > max) {
-//             indexMax = index;
-//             max = point;
-//         } else if (point === max) {
-//             indexMax = [...indexMax, index];
+export const revealGame = () => async (dispatch: Function, getState: Function) => {
+    const state = getState();
+    const { playerCards, matchNumber, playerRemain, playerPoints } = state.game;
+    if (playerCards[matchNumber]) {
+        const result: any = await getPlayerPointByMatch(playerCards[matchNumber], playerRemain, playerPoints);
+        const { newPlayerPoints, newPlayerRemain } = result;
+        // If game 5, alert the winner + shuffle.
+        if (matchNumber === 5 || newPlayerRemain.length === 1) {
+            dispatch({
+                type: END_GAME,
+                payload: {
+                    playerPoints: newPlayerPoints,
+                    playerRemain: newPlayerRemain
+                }
+            })
+        }
 
-//         }
-//         return {
-//             type: REVEAL_GAME,
-//             payload: playerCards
-//         }
-//     }
-// }
+        dispatch({
+            type: REVEAL_GAME,
+            payload: {
+                playerPoints: newPlayerPoints,
+                playerRemain: newPlayerRemain
+            }
+        })
+    }
+}
 
-export const drawCards = async (dispatch: Function, numberOfPlayers: number, deckId: string) => {
+export const drawCards = () => (dispatch: Function, getState: Function) => {
+    const state = getState();
+    const { deckId, cardRemain, playerRemain } = state.game;
+
+    if (cardRemain < playerRemain.length * Config.numberOfCardsPerMatch) {
+        dispatch(showError("Please shuffle the deck, not enough card"));
+        dispatch(backMatch());
+        return;
+    }
+    let newCardRemain = cardRemain - playerRemain.length * Config.numberOfCardsPerMatch;
     const promises = [];
-    for (let i = 1; i <= numberOfPlayers; i++) {
+    for (let i = 1; i <= playerRemain.length; i++) {
         const q = Api.drawCards(deckId);
         promises.push(q);
     }
     Promise.all(promises).then(async (response) => {
         let playerCards = {};
 
-        playerCards = await checkAndGetDrawCardsStatus(response);
-        console.log(playerCards);
+        playerCards = await checkAndGetDrawCardsStatus(response, playerRemain);
 
-        if (!playerCards) dispatch(showError("Fetch data failed"));
+        if (!playerCards) {
+            dispatch(showError("Fetch data failed"));
+            dispatch(shuffleDeck(deckId));
+            return;
+        }
         dispatch({
             type: DRAW_CARDS,
-            payload: playerCards
+            payload: {
+                playerCards,
+                cardRemain: newCardRemain
+            }
         })
     })
+}
+
+export const nextMatch = () => {
+    return {
+        type: NEXT_MATCH
+    }
+}
+
+export const backMatch = () => {
+    return {
+        type: BACK_MATCH
+    }
+}
+
+export const playGameAgain = () => {
+    return {
+        type: PLAY_GAME_AGAIN
+    }
 }
 
 export const showError = (err: string) => {
@@ -97,38 +142,72 @@ export const hideError = () => {
     }
 }
 
-const getPointFromValue = (value: number | string) => {
-    if (typeof (value) === "number") {
-        return value;
-    } else if (typeof (value) === "string") {
-        if (value == "ACE") {
-            return 1;
-        }
-        // if (value == "JACK" || value == "QUEEN" || value == "KING") {
-        return 10;
-    }
-    return 0;
-}
-
-const checkAndGetDrawCardsStatus = (response: AxiosResponse[]) => {
+const checkAndGetDrawCardsStatus = (response: AxiosResponse[], playerRemain: string[]) => {
     return new Promise((resolve, reject) => {
-        let playerCards: PlayerCard = {
-            A: [],
-            B: [],
-            C: [],
-            D: []
-        };
+        let playerCards: any = {};
 
         response.forEach((r, index) => {
             const { data } = r;
-            const playerId = getPlayerFromIndex(index + 1);
-            if (playerId) {
-                playerCards[playerId] = data.cards;
-            } else {
-                reject(new Error("Get player id failed"));
-            }
+            playerCards[playerRemain[index]] = data.cards;
         });
 
         resolve(playerCards);
     });
+}
+
+const getPlayerPointByMatch = (playerCardByMatch: any, playerRemain: string[], playerPoints: any) => {
+    const playerCardValue: any = {};
+    let winners: any = [];
+    // Get max total card value
+    let maxCardValue = -99999999;
+    let newPlayerRemain = [...playerRemain];
+
+    return new Promise((resolve, reject) => {
+        new Promise((s) => {
+            // Get total value of this match each player
+            playerRemain.forEach((player, index) => {
+                playerCardByMatch[player].forEach((card: CardEntity) => {
+
+                    if (!playerCardValue[player]) {
+                        playerCardValue[player] = 0;
+                    }
+                    playerCardValue[player] += getPointFromValue(card.value);
+
+                    if (playerCardValue[player] > maxCardValue) {
+                        maxCardValue = playerCardValue[player];
+                    }
+                })
+            });
+            s();
+        }).then(() => {
+            playerRemain.forEach((player, index) => {
+                if (maxCardValue === playerCardValue[player]) {
+                    winners.push(player);
+                }
+            });
+        }).then(() => {
+            // Check which player win
+            const winnerLength = winners.length;
+            const gift = Config.betPoints * (playerRemain.length - winnerLength) / winnerLength;
+
+            playerRemain.forEach((player, index) => {
+                if (winners.indexOf(player) >= 0) {
+                    playerPoints[player] += gift;
+                } else {
+                    // Re-calculate point of each player, if < 5000 out.
+                    playerPoints[player] -= Config.betPoints;
+                    if (playerPoints[player] < Config.betPoints) {
+                        newPlayerRemain = newPlayerRemain.filter((p) => p !== player);
+                    }
+                }
+            })
+
+            const result: any = {
+                newPlayerPoints: playerPoints,
+                newPlayerRemain
+            }
+
+            resolve(result);
+        })
+    })
 }

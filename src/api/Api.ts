@@ -26,8 +26,8 @@ export class Api {
      * 
      * All remaining card will be returned to default value: 52 cards
      */
-    static async reShuffleCard(deck_id: string) {
-        const result = await Api.get(`https://deckofcardsapi.com/api/deck/${deck_id}/draw/?count=3`);
+    static async shuffleDeck(deck_id: string) {
+        const result = await Api.get(`https://deckofcardsapi.com/api/deck/${deck_id}/shuffle/`);
         return result;
     }
 

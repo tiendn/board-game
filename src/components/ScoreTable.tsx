@@ -1,43 +1,36 @@
 // Store Table
 import React from 'react';
 import { connect } from 'react-redux';
-import { PlayerCard } from '../entities/PlayerCard';
+import { Config } from '../constants/Config';
 
 interface Props {
-    playerCards: PlayerCard[],
+    currentPlayerPoints: any,
     isPlaying: boolean,
     matchNumber: number
 }
 
-class ScoreTable extends React.PureComponent<Props> {
-    getPlayerPoint(playerId: string) {
-        const { playerCards, matchNumber } = this.props;
+const ScoreTable = (props: Props) => {
+    const { currentPlayerPoints, isPlaying, matchNumber } = props;
+    if (!isPlaying) return null;
 
-    }
-
-    render() {
-        const { playerCards, isPlaying, matchNumber } = this.props;
-        if (!isPlaying) return null;
-
-        return (
-            <div id="score-table">
-                <div className="text-center">SCORE TABLE</div>
-                <div>Game: {matchNumber}</div>
-                <div>
-                    <div>A: points</div>
-                    <div>B: points</div>
-                    <div>C: points</div>
-                    <div>D: points</div>
-                </div>
+    return (
+        <div id="score-table">
+            <div className="text-center">SCORE TABLE</div>
+            <div>Game: {matchNumber}</div>
+            <div>
+                <div>A: {currentPlayerPoints[Config.Player.A]} points</div>
+                <div>B: {currentPlayerPoints[Config.Player.B]} points</div>
+                <div>C: {currentPlayerPoints[Config.Player.C]} points</div>
+                <div>D: {currentPlayerPoints[Config.Player.D]} points</div>
             </div>
-        )
-    }
+        </div>
+    )
 }
 
 const mapStateToProps = (state: any) => {
     return {
         isPlaying: state.game.isPlaying,
-        playerCards: state.game.playerCard,
+        currentPlayerPoints: Object.assign({}, state.game.playerPoints),
         matchNumber: state.game.matchNumber
     }
 }

@@ -4,7 +4,7 @@ interface Images {
 }
 
 export interface CardEntity {
-    value: string | number,
+    value: string,
     images: Images,
     suit: string,
     image: string,
