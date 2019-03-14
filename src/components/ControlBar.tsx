@@ -3,8 +3,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import ControlButton from './ControlButton';
 import { Fab, Tooltip } from '@material-ui/core';
-import { PlayCircleFilled, Shuffle } from '@material-ui/icons';
-import { playGame, shuffleDeck, drawCards, revealGame, nextMatch } from '../actions/GameAction';
+import { PlayCircleFilled, CloseRounded } from '@material-ui/icons';
+import { playGame, shuffleDeck, drawCards, revealGame, nextMatch, playGameAgain } from '../actions/GameAction';
 import Progress from './Progress';
 import MyDialog from './MyDialog';
 
@@ -12,9 +12,11 @@ interface Props {
     isPlaying: boolean;
     isControlLoading: boolean;
     isReveal: boolean;
+    isEndGame: boolean;
     cardRemain: number;
     deckId: string;
-    dispatch: Function
+    dispatch: Function;
+    style?: any;
 }
 
 class ControlBar extends React.PureComponent<Props> {
@@ -26,6 +28,7 @@ class ControlBar extends React.PureComponent<Props> {
         this.onReveal = this.onReveal.bind(this);
         this.onDraw = this.onDraw.bind(this);
         this.shuffle = this.shuffle.bind(this);
+        this.rePlayGame = this.rePlayGame.bind(this);
     }
 
     onDraw() {
@@ -49,21 +52,62 @@ class ControlBar extends React.PureComponent<Props> {
         dispatch(playGame());
     }
 
+    rePlayGame() {
+        this.props.dispatch(playGameAgain());
+    }
+
     shuffle() {
         const { dispatch, deckId } = this.props;
         dispatch(shuffleDeck(deckId));
     }
 
-    render() {
-        const { isPlaying, isControlLoading, isReveal, cardRemain } = this.props;
-        if (!isPlaying) {
+    renderControlBar() {
+        const { isEndGame, isReveal } = this.props;
+        if (isEndGame) {
             return (
-                <Tooltip title="Play" placement="top">
+                <Tooltip title="Quit" placement="top">
+                    <Fab color="secondary" aria-label="Quit" className="control-btn" onClick={this.rePlayGame}>
+                        <CloseRounded />
+                    </Fab>
+                </Tooltip>
+            )
+        }
+
+        return (
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+                <ControlButton title="Shuffle" color="default" ariaLabel="Shuffle" onClick={this.onShuffle} />
+                <ControlButton title="Reveal" color="primary" ariaLabel="Reveal" onClick={this.onReveal} />
+                <ControlButton disabled={!isReveal} title="Draw" color="secondary" ariaLabel="Draw" onClick={this.onDraw} />
+                <MyDialog
+                    ref={(ref) => this.dialogRef = ref}
+                    dialogContent="All cards will be shuffled"
+                    dialogTitle="Shuffle the deck"
+                    onAgree={this.shuffle}
+                />
+            </div>
+        )
+    }
+
+    renderPlayBtn() {
+        return (
+            <Tooltip title="Play" placement="top">
                 <Fab color="primary" aria-label="Play" className="control-btn" onClick={this.onPlay}>
                     <PlayCircleFilled />
                 </Fab>
+            </Tooltip>
+        );
+    }
+
+    render() {
+        const { isPlaying, isControlLoading, isReveal, cardRemain, style } = this.props;
+        if (!isPlaying) {
+            return (
+                <Tooltip title="Play" placement="top">
+                    <Fab color="primary" aria-label="Play" className="control-btn" onClick={this.onPlay}>
+                        <PlayCircleFilled />
+                    </Fab>
                 </Tooltip>
-            );
+            )
         }
         if (isControlLoading) {
             return (
@@ -72,19 +116,9 @@ class ControlBar extends React.PureComponent<Props> {
         }
 
         return (
-            <div>
-                <div className="row" style={{ justifyContent: "space-between" }}>
-                    <ControlButton title="Shuffle" color="primary" ariaLabel="Shuffle" onClick={this.onShuffle} />
-                    <ControlButton title="Reveal" color="default" ariaLabel="Reveal" onClick={this.onReveal} />
-                    <ControlButton disabled={!isReveal} title="Draw" color="secondary" ariaLabel="Draw" onClick={this.onDraw} />
-                    <MyDialog
-                        ref={(ref) => this.dialogRef = ref}
-                        dialogContent="All cards will be shuffled"
-                        dialogTitle="Shuffle the deck"
-                        onAgree={this.shuffle}
-                    />
-                </div>
-                <p>Number of cards remain: {cardRemain} </p>
+            <div style={style} className="control-bar">
+                {this.renderControlBar()}
+                <p className="text-center">Number of cards remain: {cardRemain} </p>
             </div>
         );
     }
@@ -95,6 +129,7 @@ const mapStateToProps = (state: any) => {
         isReveal: state.game.isReveal,
         isPlaying: state.game.isPlaying,
         isControlLoading: state.game.isControlLoading,
+        isEndGame: state.game.isEndGame,
         deckId: state.game.deckId,
         cardRemain: state.game.cardRemain
     }

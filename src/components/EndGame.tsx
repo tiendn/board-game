@@ -48,7 +48,7 @@ class EndGame extends React.PureComponent<Props, State> {
 
 
         dialogTitle = winnerId === Config.currentPlayer ? "VICTORY" : "DEFEAT";
-        dialogContent = `The winner have ${maxPoints} points`;
+        dialogContent = `The winner is ${winnerId} and have ${maxPoints} points`;
 
         this.setState({
             dialogTitle, dialogContent

@@ -7,7 +7,7 @@ interface Props {
     onClick: Function,
     color: PropTypes.Color,
     ariaLabel: string,
-    disabled?: boolean
+    disabled?: boolean,
 }
 
 export default (props: Props) => (

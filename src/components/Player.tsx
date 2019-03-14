@@ -30,10 +30,10 @@ class Player extends React.PureComponent<Props> {
             <div className="player-container">
                 <div className="row">
                     <GCard isReveal={isReveal} card={data[playerId][0]} />
-                    <GCard isReveal={isReveal} card={data[playerId][1]} />
-                    <GCard isReveal={isReveal} card={data[playerId][2]} />
+                    <GCard isReveal={isReveal} card={data[playerId][1]} style={{ marginLeft: "-20%" }} />
+                    <GCard isReveal={isReveal} card={data[playerId][2]} style={{ marginLeft: "-20%" }} />
                 </div>
-                <h3 className="text-center">{playerId}</h3>
+                <div className="text-center">{playerId}</div>
             </div>
         );
     }
