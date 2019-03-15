@@ -38,7 +38,10 @@ class ControlBar extends React.PureComponent<Props> {
     }
 
     onReveal() {
-        this.props.dispatch(revealGame());
+        const { dispatch, isReveal } = this.props;
+        if (!isReveal) {
+            dispatch(revealGame());
+        }
     }
 
     onShuffle() {
@@ -76,7 +79,7 @@ class ControlBar extends React.PureComponent<Props> {
         return (
             <div className="row" style={{ justifyContent: 'space-between' }}>
                 <ControlButton title="Shuffle" color="default" ariaLabel="Shuffle" onClick={this.onShuffle} />
-                <ControlButton title="Reveal" color="primary" ariaLabel="Reveal" onClick={this.onReveal} />
+                <ControlButton disabled={isReveal} title="Reveal" color="primary" ariaLabel="Reveal" onClick={this.onReveal} />
                 <ControlButton disabled={!isReveal} title="Draw" color="secondary" ariaLabel="Draw" onClick={this.onDraw} />
                 <MyDialog
                     ref={(ref) => this.dialogRef = ref}
